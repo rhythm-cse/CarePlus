@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CarePlus | Patient Dashboard</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f3f7fb;color:#183247}header{background:#087e8b;color:#fff;padding:18px 6%;display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}header a{color:#fff;text-decoration:none;border:1px solid #ffffffaa;padding:9px 14px;border-radius:8px}.navlinks{display:flex;gap:10px;flex-wrap:wrap}main{max-width:1200px;margin:35px auto;padding:0 20px}.welcome{background:linear-gradient(120deg,#087e8b,#07566c);color:white;padding:32px;border-radius:20px;margin-bottom:25px;box-shadow:0 12px 30px #073b4c18}.welcome h1{margin:0 0 9px;font-size:clamp(26px,4vw,38px)}.welcome p{margin:6px 0;color:#e3f5f7}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:28px}.stat,.card{background:#fff;border:1px solid #e7edf3;border-radius:17px;padding:22px;box-shadow:0 7px 22px #1832470a}.stat p{margin:0;color:#718096}.stat strong{display:block;font-size:30px;color:#087e8b;margin-top:9px}.section-title{margin:28px 0 15px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.card{min-height:190px;display:flex;flex-direction:column;align-items:flex-start}.icon{width:48px;height:48px;border-radius:13px;background:#e8f5f7;color:#087e8b;display:grid;place-items:center;font-size:24px}.card h3{margin:17px 0 8px}.card p{color:#718096;line-height:1.5;margin:0 0 18px}.card a{margin-top:auto;background:#087e8b;color:white;text-decoration:none;padding:11px 16px;border-radius:9px;font-weight:bold}.card a:hover{background:#066773}.quick{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.quick a{color:white;text-decoration:none;background:#ffffff22;border:1px solid #ffffff77;padding:9px 13px;border-radius:9px}@media(max-width:850px){.cards{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}}@media(max-width:520px){.cards{grid-template-columns:1fr}main{margin:20px auto}.welcome{padding:24px}}
+</style></head><body>
+<header><h2>CarePlus +</h2><nav class="navlinks"><a href="/patient/dashboard">Dashboard</a><a href="/patient/appointments">My Appointments</a><a href="/patient/profile">My Profile</a><a href="/logout">Logout</a></nav></header>
+<main>
+<section class="welcome"><h1>Welcome, {{ patient_name }}!</h1><p>Your personal healthcare dashboard</p><p>{{ patient_email }}</p><div class="quick"><a href="/doctors">Find Hospitals & Doctors</a><a href="/patient/appointments">View My Appointments</a></div></section>
+<section class="stats"><div class="stat"><p>Total Appointments</p><strong id="total">—</strong></div><div class="stat"><p>Pending</p><strong id="pending">—</strong></div><div class="stat"><p>Confirmed</p><strong id="confirmed">—</strong></div><div class="stat"><p>Completed</p><strong id="completed">—</strong></div></section>
+<h2 class="section-title">Your CarePlus Services</h2><section class="cards">
+<article class="card"><div class="icon">🏥</div><h3>Find Hospitals</h3><p>Explore hospitals and healthcare facilities in Ahmedabad.</p><a href="/doctors">Explore Hospitals →</a></article>
+<article class="card"><div class="icon">🩺</div><h3>Find Doctors</h3><p>Discover doctors, their specializations and hospital details.</p><a href="/doctors">View Doctors →</a></article>
+<article class="card"><div class="icon">📅</div><h3>Book Appointment</h3><p>Select a hospital, choose its doctor and request an appointment.</p><a href="/doctors">Book Now →</a></article>
+<article class="card"><div class="icon">📋</div><h3>My Appointments</h3><p>Check your appointment history and manage your bookings.</p><a href="/patient/appointments">View Appointments →</a></article>
+<article class="card"><div class="icon">👤</div><h3>My Profile</h3><p>View and update your personal account information.</p><a href="/patient/profile">View Profile →</a></article>
+</section></main>
+<script>
+(async()=>{try{const r=await fetch('/api/my-appointments');const d=await r.json();if(!r.ok||!d.success)return;const a=d.appointments||[];document.getElementById('total').textContent=a.length;for(const s of ['pending','confirmed','completed'])document.getElementById(s).textContent=a.filter(x=>(x.status||'').toLowerCase()===s).length;}catch(e){console.error(e)}})();
+</script></body></html>

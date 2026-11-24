@@ -1,0 +1,244 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Appointment | CarePlus</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body { background: #f3f7fb; font-family: Arial, sans-serif; color: #183247; }
+        .navbar { background: #073b4c; }
+        .brand { color: white; font-size: 25px; font-weight: bold; text-decoration: none; }
+        .heading { text-align: center; padding: 35px 15px 20px; }
+        .heading h1 { color: #073b4c; font-weight: 800; }
+        .booking-card { background: white; border-radius: 18px; padding: 28px; box-shadow: 0 8px 30px #00000010; margin-bottom: 40px; }
+        .doctor-card { background: #eaf6f8; border-radius: 15px; padding: 20px; display: flex; align-items: center; gap: 18px; margin-bottom: 25px; }
+        .doctor-photo { width: 100px; height: 100px; border-radius: 14px; object-fit: cover; background: #d9e8ed; }
+        .form-label { font-weight: 600; }
+        .form-control, .form-select { padding: 12px; border-radius: 10px; }
+        .btn-book { background: #087f8c; color: white; border: 0; padding: 13px; border-radius: 10px; font-weight: bold; width: 100%; }
+        .btn-book:hover { background: #05636e; color: white; }
+        .btn-book:disabled { opacity: .65; }
+        footer { background: #073b4c; color: white; padding: 20px; text-align: center; }
+        @media(max-width: 576px) {
+            .doctor-card { align-items: flex-start; flex-direction: column; }
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-dark">
+    <div class="container">
+        <a class="brand" href="/">CarePlus+</a>
+        <div class="d-flex gap-2 flex-wrap"><a href="/patient/dashboard" class="btn btn-outline-light btn-sm">Dashboard</a><a href="/patient/appointments" class="btn btn-outline-light btn-sm">My Appointments</a><a href="/doctors" class="btn btn-outline-light btn-sm">Back to Doctors</a></div>
+    </div>
+</nav>
+
+<header class="heading">
+    <h1>Book Your Appointment</h1>
+    <p class="text-secondary">Your health deserves timely care.</p>
+</header>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="booking-card">
+
+                <h4 class="mb-3">Selected Doctor</h4>
+
+                <div class="doctor-card">
+                    {% if doctor.photo_url %}
+                    <img src="{{ doctor.photo_url }}" class="doctor-photo" alt="Doctor">
+                    {% else %}
+                    <div class="doctor-photo d-flex align-items-center justify-content-center">Doctor</div>
+                    {% endif %}
+
+                    <div>
+                        <h5>{{ doctor.full_name }}</h5>
+                        <div>{{ doctor.specialization }}</div>
+                        <small class="text-secondary">
+                            {{ doctor.qualification or "Qualification not listed" }}
+                            {% if doctor.experience_years %}
+                            · {{ doctor.experience_years }} years experience
+                            {% endif %}
+                        </small>
+                        <div class="mt-2 fw-bold">Consultation Fee: ₹{{ doctor.consultation_fee }}</div>
+                        <small>{{ doctor.hospital_name }}</small>
+                    </div>
+                </div>
+
+                <form id="appointmentForm">
+                    <input type="hidden" id="doctor_id" value="{{ doctor.doctor_id }}">
+                    <input type="hidden" id="hospital_id" value="{{ doctor.hospital_id }}">
+
+                    <div class="alert alert-info">
+                        <strong>Patient information:</strong>
+                        Your logged-in account will be used automatically.
+                        You do not need to enter your Patient ID.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="appointment_date">Appointment Date</label>
+                        <input type="date" class="form-control" id="appointment_date" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="slot_id">Available Time Slot</label>
+                        <select class="form-select" id="slot_id" required disabled>
+                            <option value="">First select a date</option>
+                        </select>
+                        <small id="slotMessage" class="text-secondary"></small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label" for="reason">Reason for Appointment</label>
+                        <textarea class="form-control" id="reason" rows="3" maxlength="1000"
+                            placeholder="Briefly describe your health concern"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-book" id="bookButton">
+                        Confirm Appointment
+                    </button>
+
+                    <div id="resultMessage" class="mt-3" style="display:none;"></div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer>© 2026 CarePlus – Your Health, Our Priority</footer>
+
+<script>
+const dateInput = document.getElementById("appointment_date");
+const slotSelect = document.getElementById("slot_id");
+const slotMessage = document.getElementById("slotMessage");
+const resultMessage = document.getElementById("resultMessage");
+const form = document.getElementById("appointmentForm");
+const bookButton = document.getElementById("bookButton");
+
+const doctorId = document.getElementById("doctor_id").value;
+const hospitalId = document.getElementById("hospital_id").value;
+
+const now = new Date();
+const today = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+    .toISOString().split("T")[0];
+
+dateInput.min = today;
+
+dateInput.addEventListener("change", async function() {
+    const selectedDate = dateInput.value;
+
+    slotSelect.innerHTML = '<option value="">Loading slots...</option>';
+    slotSelect.disabled = true;
+    slotMessage.textContent = "";
+
+    if (!selectedDate) {
+        slotSelect.innerHTML = '<option value="">First select a date</option>';
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            `/api/doctors/${doctorId}/slots?hospital_id=${hospitalId}&date=${selectedDate}`
+        );
+
+        const data = await response.json();
+        slotSelect.innerHTML = "";
+
+        if (!response.ok || !data.success) {
+            slotSelect.innerHTML = '<option value="">Could not load slots</option>';
+            slotMessage.textContent = data.message || "Please try again.";
+            return;
+        }
+
+        if (!data.slots.length) {
+            slotSelect.innerHTML = '<option value="">No slots available</option>';
+            slotMessage.textContent = "Please choose another date.";
+            return;
+        }
+
+        slotSelect.innerHTML = '<option value="">Choose a time slot</option>';
+
+        data.slots.forEach(slot => {
+            const option = document.createElement("option");
+            option.value = slot.id;
+            option.textContent = `${slot.start_time} - ${slot.end_time}`;
+            slotSelect.appendChild(option);
+        });
+
+        slotSelect.disabled = false;
+        slotMessage.textContent = `${data.slots.length} available slot(s) found.`;
+
+    } catch (error) {
+        slotSelect.innerHTML = '<option value="">Unable to load slots</option>';
+        slotMessage.textContent = "Server connection failed.";
+    }
+});
+
+form.addEventListener("submit", async function(event) {
+    event.preventDefault();
+    resultMessage.style.display = "none";
+
+    if (!slotSelect.value) {
+        showMessage("Please select an available time slot.", false);
+        return;
+    }
+
+    // Patient ID is intentionally NOT sent.
+    // Flask will get it from the logged-in session.
+    const bookingData = {
+        doctor_id: doctorId,
+        hospital_id: hospitalId,
+        slot_id: slotSelect.value,
+        reason: document.getElementById("reason").value.trim()
+    };
+
+    bookButton.disabled = true;
+    bookButton.textContent = "Booking...";
+
+    try {
+        const response = await fetch("/api/appointments", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(bookingData)
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            showMessage(
+                `Appointment booked successfully! Appointment ID: ${data.appointment_id}. ${data.email_message || ""}`,
+                true
+            );
+
+            bookButton.textContent = "Opening My Appointments...";
+            setTimeout(() => { window.location.href = "/patient/appointments"; }, 1200);
+
+        } else {
+            showMessage(data.message || "Appointment could not be booked.", false);
+        }
+
+    } catch (error) {
+        showMessage("Server connection failed. Please try again.", false);
+    } finally {
+        bookButton.disabled = false;
+        bookButton.textContent = "Confirm Appointment";
+    }
+});
+
+function showMessage(message, success) {
+    resultMessage.style.display = "block";
+    resultMessage.className = success
+        ? "alert alert-success mt-3"
+        : "alert alert-danger mt-3";
+    resultMessage.textContent = message;
+}
+</script>
+
+</body>
+</html>

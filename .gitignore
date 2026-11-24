@@ -1,0 +1,24 @@
+
+# Private settings
+.env
+.env.*
+
+# Python virtual environment
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# VS Code settings
+.vscode/
+
+# User uploaded files and private data
+uploads/*
+!uploads/.gitkeep
+
+# Local database backups
+*.sql
+*.db
+*.sqlite3
