@@ -21,12 +21,14 @@ app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 DB_CONFIG = {
-    "host": os.getenv("CAREPLUS_DB_HOST", "127.0.0.1"),
-    "user": os.getenv("CAREPLUS_DB_USER", "root"),
-    "password": os.getenv("CAREPLUS_DB_PASSWORD", ""),
+    "host": os.getenv("CAREPLUS_DB_HOST"),
+    "port": int(os.getenv("CAREPLUS_DB_PORT", "4000")),
+    "user": os.getenv("CAREPLUS_DB_USER"),
+    "password": os.getenv("CAREPLUS_DB_PASSWORD"),
     "database": os.getenv("CAREPLUS_DB_NAME", "careplus_db"),
+    "ssl_verify_cert": True,
+    "ssl_verify_identity": True,
 }
-
 
 def get_db():
     return mysql.connector.connect(**DB_CONFIG)
